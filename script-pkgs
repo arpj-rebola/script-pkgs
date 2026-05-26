@@ -248,7 +248,9 @@ run() {
                 die "Unrecognized management option '$argument'"
             ;;
         esac
+    else
+        run_package "$action" "$argument"
     fi
 }
 
-run_package "$1" "$2"
+run "$1" "$2"
