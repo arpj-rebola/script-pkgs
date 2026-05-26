@@ -201,6 +201,32 @@ manage_install() {
     echo "script-pkgs was installed"
 }
 
+manage_escalate() {
+    git -C "$ScriptPkgsDir" remote remove origin \
+        || die "Could not delete HTTPS remote"
+    git -C "$ScriptPkgsDir" remote add origin "$ScriptPkgsRepoSsh" \
+        || die "Could not add SSH remote"
+    git -C "$ScriptPkgsDir" branch --set-upstream-to=origin/main \
+        || die "Could not set upstream to SSH remote"
+    git -C "$ScriptPkgsDir" pull \
+        || die "Could not update script-pkgs"
+    echo "script-pkgs was escalated to SSH access"
+}
+
+manage_update() {
+    git -C "$ScriptPkgsDir" pull \
+        || die "Could not pull data from repository"
+    echo "script-pkgs was updated"
+}
+
+manage_upgrade() {
+    git -C "$ScriptPkgsDir" add sources/* \
+        || die "Could not add new sources to repository"
+    git -C "$ScriptPkgsDir" push \
+        || die "Could not push data to repository"
+    echo "script-pkgs was upgraded"
+}
+
 run() {
     local action="$1"
     local argument="$2"
@@ -209,8 +235,14 @@ run() {
             'install')
                 manage_install
             ;;
+            'escalate')
+                manage_escalate
+            ;;
             'update')
                 manage_update
+            ;;
+            'upgrade')
+                manage_upgrade
             ;;
             *)
                 die "Unrecognized management option '$argument'"
