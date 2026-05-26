@@ -1,0 +1,222 @@
+#!/usr/bin/env bash
+
+trap 'exit 88' SIGUSR2
+set +o history
+set -o pipefail
+set -o errexit
+
+ScriptPkgsDir="$HOME/.local/share/script-pkgs"
+ScriptPkgsState="$ScriptPkgsDir/current.json"
+ScriptPkgsPayloads="$ScriptPkgsDir/scripts"
+ScriptPkgsRepoHttps="https://github.com/arpj-rebola/script-pkgs.git"
+ScriptPkgsRepoSsh="git@github.com:arpj-rebola/script-pkgs.git"
+
+die() {
+    local message="$1"
+	echo "error: $message" >&2
+	{
+		kill -s SIGUSR2 $$
+	}
+}
+
+run_package() {
+    local action="$1"
+    local input="$2"
+    local packages
+    local package
+    if test "$input" == "*"; then
+        mapfile -t packages < \
+            <(jq -Mcr 'keys | .[]' "$ScriptPkgsState" \
+                || die "Could not retrieve installed packages")
+    else
+        packages=("$package")
+    fi
+    for package in "${packages[@]}"; do
+        case "$action" in
+            'install')
+                install_package "$package"
+            ;;
+            'update')
+                update_package "$package"
+            ;;
+            *)
+                die "Unknown action '$action'"
+            ;;
+        esac
+    done
+}
+
+install_package() {
+    local package="$1"
+    local source
+    local script
+    local tag
+    local output
+    local status
+    source="$ScriptPkgsPayloads/$package.sh"
+    check_package "$package" "$source"
+    tag="$(get_tag "$package")"
+    if test "$tag" != "null"; then
+        { echo "package '$package' is already installed"; exit 0; }
+    fi
+    script="$(mktemp)" \
+        || die "Could not create temporary script"
+    output="$(mktemp)" \
+        || die "Could not create temporary output"
+    extract_script "install" "$source" "$script"
+    execute_script "$script" "$tag" "$output"
+    status="$(get_status "$output")"
+    if test "$status" == "installed"; then
+        update_tag "$output" "$package"
+        echo "package '$package' was installed"
+    else
+        die "Installation failed for package '$package'"
+    fi
+}
+
+update_package() {
+    local package="$1"
+    local source
+    local script
+    local tag
+    local output
+    local status
+    source="$ScriptPkgsPayloads/$package.sh"
+    check_package "$package" "$source"
+    tag="$(get_tag "$package")"
+    if test "$tag" == "null"; then
+        { echo "package '$package' is not yet installed"; exit 0; }
+    fi
+    script="$(mktemp)" \
+        || die "Could not create temporary script"
+    output="$(mktemp)" \
+        || die "Could not create temporary output"
+    extract_script "update" "$source" "$script"
+    execute_script "$script" "$tag" "$output"
+    status="$(get_status "$output")"
+    if test "$status" == "noop"; then
+        echo "package '$package' is up to date"
+    elif test "$status" == "updated"; then
+        update_tag "$output" "$package"
+        echo "package '$package' was updated"
+    else
+        die "Installation failed for package '$package'"
+    fi
+}
+
+check_package() {
+    local package="$1"
+    local source="$2"
+    if ! test -e "$source"; then
+        die "No payload for package '$package'"
+    fi
+}
+
+get_tag() {
+    local package="$1"
+    jq -Mcr --arg package "$package" '.[($package)]' "$ScriptPkgsState" \
+        || die "Could not retrieve current tag for package '$package'"
+}
+
+extract_script() {
+    local action="$1"
+    local source="$2"
+    local dest="$3"
+    jq -McrRs --arg fragment "$action" 'split("\n") | . as $input | (
+                to_entries | map(
+                    .["key"] as $line | .["value"] |
+                    capture("#\\s+script-pkgs (?<switch>[^ \\-]+)-script\\s*$") |
+                    . + {"line": $line}
+                ) | (map(.["line"]) + [$input | length]) as $switches |
+                map(. + {
+                    "end": (.["line"] as $line | $switches | map(select(. > $line)) |
+                        sort | first - 1)
+                    }) |
+                map({
+                    "key": .["switch"],
+                    "value": del(.["switch"])
+                }) | from_entries
+            ) as $parts | (
+                ["init", $fragment] | map(. as $part | $parts | .[($part)]) |
+                map(.["line"] as $first | .["end"] as $last |
+                    $input | .[($first):($last)])
+            ) | [ [
+                "#!/usr/bin/env bash",
+                "set +o history",
+                "set -o pipefail",
+                "status=\"noop\"",
+                "tag=\"\"",
+                "prev=\"$1\""
+            ] ] + . + [ [
+                "echo \"# script-pkgs $status $tag\" || exit 1",
+                "exit 0"
+            ] ] | add | join("\n")' "$source" \
+        | sponge "$dest" \
+        || die "Could not extract script '$action' from '$source'"
+}
+
+execute_script() {
+    local script="$1"
+    local tag="$2"
+    local output="$3"
+    bash -x "$script" "$tag" \
+        | jq -McrRs 'split("\n") | .[] |
+                capture(^#\\s+script-pkgs\\s+(?<status>[^\\s]+)\\s+(?<tag>[^\\s]+)\\s*$)' \
+        | sponge "$output" \
+        || die "Could not execute script"
+}
+
+get_status() {
+    local output="$1"
+    jq -Mcr '.["status"]' "$output" \
+        || die "Could not retrieve installation status"
+}
+
+update_tag() {
+    local output="$1"
+    local tag
+    tag="$(jq -Mcrs '.["tag"]' "$output")" \
+        || die "Could not retrieve installation tag"
+    if test "$tag" == "null"; then
+        die "Invalid tag"
+    fi
+    jq -Mcr --arg package "$package" --arg tag "$tag" '
+            .[($package)] | $tag' "$ScriptPkgsState" \
+        | sponge "$ScriptPkgsState" \
+        || die "Could not update installation tag"
+}
+
+manage_install() {
+    install -o "$USER" -g "$USER" -m 755 -d "$ScriptPkgsDir" \
+        || die "Could not create script-pkgs directory"
+    git clone "$ScriptPkgsRepoHttps" "$ScriptPkgsDir" \
+        || die "Could not clone script-pkgs repository"
+    chmod +x "$ScriptPkgsDir/script-pkgs" \
+        || die "Could not make script-pkgs executable"
+    jq -Mn '{}' \
+        | sponge "$ScriptPkgsState" \
+        || die "Could not create script-pkgs state"
+    sudo ln -fs "$ScriptPkgsDir/script-pkgs" "/usr/bin/script-pkgs" \
+        || die "Could not create symbolic link to script-pkgs"
+    echo "script-pkgs was installed"
+}
+
+run() {
+    local action="$1"
+    local argument="$2"
+    if test "$action" == "manage"; then
+        case "$argument" in
+            'install')
+                manage_install
+            ;;
+            'update')
+                manage_update
+            ;;
+            *)
+                die "Unrecognized management option '$argument'"
+            ;;
+        esac
+    fi
+}
+
+run_package "$1" "$2"
