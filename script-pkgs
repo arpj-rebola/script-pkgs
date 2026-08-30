@@ -161,7 +161,7 @@ execute_script() {
     local output="$3"
     bash -x "$script" "$tag" \
         | jq -McrRs 'split("\n") | .[] |
-                capture(^#\\s+script-pkgs\\s+(?<status>[^\\s]+)\\s+(?<tag>[^\\s]+)\\s*$)' \
+                capture("^#\\s+script-pkgs\\s+(?<status>[^\\s]+)\\s+(?<tag>[^\\s]+)\\s*$")' \
         | sponge "$output" \
         || die "Could not execute script"
 }
