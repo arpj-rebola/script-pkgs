@@ -175,7 +175,7 @@ get_status() {
 update_tag() {
     local output="$1"
     local tag
-    tag="$(jq -Mcrs '.["tag"]' "$output")" \
+    tag="$(jq -Mcr '.["tag"]' "$output")" \
         || die "Could not retrieve installation tag"
     if test "$tag" == "null"; then
         die "Invalid tag"
