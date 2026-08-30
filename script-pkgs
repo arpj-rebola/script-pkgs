@@ -181,7 +181,7 @@ update_tag() {
         die "Invalid tag"
     fi
     jq -Mcr --arg package "$package" --arg tag "$tag" '
-            .[($package)] | $tag' "$ScriptPkgsState" \
+            .[($package)] |= $tag' "$ScriptPkgsState" \
         | sponge "$ScriptPkgsState" \
         || die "Could not update installation tag"
 }
