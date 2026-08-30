@@ -29,7 +29,7 @@ run_package() {
             <(jq -Mcr 'keys | .[]' "$ScriptPkgsState" \
                 || die "Could not retrieve installed packages")
     else
-        packages=("$package")
+        packages=("$input")
     fi
     for package in "${packages[@]}"; do
         case "$action" in
