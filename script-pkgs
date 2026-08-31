@@ -204,10 +204,14 @@ manage_install() {
 }
 
 manage_escalate() {
-    git -C "$ScriptPkgsDir" remote remove origin \
-        || die "Could not delete HTTPS remote"
+    if git -C "$ScriptPkgsDir" remote show origin; then
+        git -C "$ScriptPkgsDir" remote remove origin \
+            || die "Could not delete HTTPS remote"
+    fi
     git -C "$ScriptPkgsDir" remote add origin "$ScriptPkgsRepoSsh" \
         || die "Could not add SSH remote"
+    git -C "$ScriptPkgsDir" fetch \
+        || die "Could not fetch remote through SSH"
     git -C "$ScriptPkgsDir" branch --set-upstream-to=origin/main \
         || die "Could not set upstream to SSH remote"
     git -C "$ScriptPkgsDir" pull \
