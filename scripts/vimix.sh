@@ -18,6 +18,7 @@ tempkde="$temp/kde"
 tempicon="$temp/icon"
 tempgtk="$temp/theme"
 tempcursor="$temp/cursor"
+sudo apt-get install libsass1 sassc || exit 1
 git clone "https://github.com/$slugkde" "$tempkde" || exit 1
 #mapfile -t files < <(find "$tempkde" -name "*.desktop") || exit 1
 #for file in "${files[@]}"; do
