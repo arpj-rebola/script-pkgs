@@ -4,12 +4,13 @@
 # script-pkgs init-script
 slug="bitwarden/clients"
 ghreleases="https://api.github.com/repos/$slug/releases"
-tag="$(curl -sL "$ghreleases" | jq -Mcr \
+tag="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" | jq -Mcr \
     'map(select(.["tag_name"] | startswith("cli-"))) | first | .["tag_name"]')" || exit 1
 target="/opt/bitwarden-cli"
 
 # script-pkgs install-script
-url="$(curl -sL "$ghreleases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
+url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" \
+    | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
     .["assets"] | .[] | select(.["name"] | test("^bw-linux-[0-9\\.]+\\.zip$")) |
     .["browser_download_url"]')" || exit 1
 zip="$(mktemp)" || exit 1
@@ -23,7 +24,8 @@ status="installed"
 # script-pkgs update-script
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
-    url="$(curl -sL "$ghreleases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
+    url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" \
+        | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
         .["assets"] | .[] | select(.["name"] | test("^bw-linux-[0-9\\.]+\\.zip$")) |
         .["browser_download_url"]')" || exit 1
     zip="$(mktemp)" || exit 1

@@ -4,9 +4,10 @@
 # script-pkgs init-script
 ghuser="https://github.com/enzo1982/"
 ghreleases="https://api.github.com/repos/enzo1982/freac/releases"
-tag="$(curl -sL "$ghreleases" | jq -Mcr \
+tag="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" | jq -Mcr \
     'map(select(.["prerelease"] | not)) | first | .["tag_name"]')" || exit 1
-commit="$(curl -sL "$ghreleases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
+commit="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" \
+    | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
     .["target_commitish"]')" || exit 1
 target="/opt/freac"
 

@@ -4,14 +4,14 @@
 # script-pkgs init-script
 slug="YosysHQ/oss-cad-suite-build"
 releases="https://api.github.com/repos/$slug/releases"
-tag="$(curl -sL "$releases" | jq -Mcr \
+tag="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$releases" | jq -Mcr \
     'map(select(.["prerelease"] | not)) | first | .["tag_name"]')" || exit 1
 target="/opt/oss-cad"
 links=("mcy" "boolector" "avy" "aigbmc" "eqy" "nextpnr" "verilator" "iverilog")
 cdlinks=("tabbypy3" "yosys" "sby" "sby-gui" "yosys-abc")
 
 # script-pkgs install-script
-url="$(curl -sL "$releases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
+url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$releases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
     .["assets"] | .[] | select(.["name"] | test("^oss-cad-suite-linux-x64-.*\\.tgz$")) |
     .["browser_download_url"]')" || exit 1
 tgz="$(mktemp)" || exit 1
@@ -37,7 +37,7 @@ status="installed"
 # script-pkgs update-script
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
-    url="$(curl -sL "$releases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
+    url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$releases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
         .["assets"] | .[] | select(.["name"] | test("^oss-cad-suite-linux-x64-.*\\.tgz$")) |
         .["browser_download_url"]')" || exit 1
     tgz="$(mktemp)" || exit 1

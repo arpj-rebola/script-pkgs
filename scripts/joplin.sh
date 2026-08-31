@@ -4,7 +4,7 @@
 url="https://raw.githubusercontent.com/laurent22/joplin/dev/Joplin_install_and_update.sh"
 release="https://api.github.com/repos/laurent22/joplin/releases"
 target="/opt/joplin"
-tag="$(curl -sL "$release" | jq -eMcr 'map(select(.["prerelease"] | not)) |
+tag="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$release" | jq -eMcr 'map(select(.["prerelease"] | not)) |
     first | .["name"]')" || exit 1
 
 # script-pkgs install-script

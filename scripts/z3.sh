@@ -3,11 +3,11 @@
 # script-pkgs init-script
 slug="Z3Prover/z3"
 ghreleases="https://api.github.com/repos/$slug/releases"
-tag="$(curl -sL "$ghreleases" | jq -Mcr 'map(.["tag_name"] | select(test("^z3-[0-9\\.]+$"))) | first')" || exit 1
+tag="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" | jq -Mcr 'map(.["tag_name"] | select(test("^z3-[0-9\\.]+$"))) | first')" || exit 1
 target="/opt/z3"
 
 # script-pkgs install-script
-url="$(curl -sL "$ghreleases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
+url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
     .["assets"] | .[] | select(.["name"] | test("^z3-.*-x64-glibc-.*\\.zip$")) |
     .["browser_download_url"]')" || exit 1
 zip="$(mktemp)" || exit 1
@@ -24,7 +24,7 @@ status="installed"
 # script-pkgs update-script
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
-    url="$(curl -sL "$ghreleases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
+    url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
         .["assets"] | .[] | select(.["name"] | test("^z3-.*-x64-glibc-.*\\.zip$")) |
         .["browser_download_url"]')" || exit 1
     zip="$(mktemp)" || exit 1

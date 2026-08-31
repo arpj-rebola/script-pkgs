@@ -4,7 +4,7 @@
 slug="vinceliuice/Layan-cursors"
 ghcommits="https://api.github.com/repos/$slug/commits"
 url="https://github.com/$slug"
-tag="$(curl -sL "$ghcommits" | jq -eMcr 'first | .["sha"]')" || exit 1
+tag="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghcommits" | jq -eMcr 'first | .["sha"]')" || exit 1
 target="/$HOME/.icons"
 src="$HOME/.local/share/icons"
 dirs=("Layan-cursors" "Layan-white-cursors" "Layan-border-cursors")

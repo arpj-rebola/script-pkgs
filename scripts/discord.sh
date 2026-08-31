@@ -4,7 +4,7 @@
 api="https://discord.com/api"
 updates="$api/updates/stable?platform=linux"
 download="$api/download?platform=linux&format=deb"
-tag="$(curl -sL "$updates" | jq -eMcr '.["name"]')" || exit 1
+tag="$(curl -sL --url "$updates" | jq -eMcr '.["name"]')" || exit 1
 
 # script-pkgs install-script
 deb="$(mktemp)" || exit 1

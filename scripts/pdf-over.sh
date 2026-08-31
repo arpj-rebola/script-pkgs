@@ -5,7 +5,7 @@ target="/opt/pdf-over"
 slug="a-sit/PDF-Over"
 repo="https://github.com/$slug"
 ghtags="https://api.github.com/repos/$slug/tags"
-release="$(curl -sL "$ghtags" | jq -Mcr 'first')" || exit 1
+release="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghtags" | jq -Mcr 'first')" || exit 1
 tag="$(jq -Mcrn --argjson release "$release" \
     '$release | .["commit"] | .["sha"]')" || exit 1
 

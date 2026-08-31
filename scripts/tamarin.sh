@@ -3,11 +3,11 @@
 # script-pkgs init-script
 slug="tamarin-prover/tamarin-prover"
 ghreleases="https://api.github.com/repos/$slug/releases"
-tag="$(curl -sL "$ghreleases" | jq -eMcr 'first | .["tag_name"]')" || exit 1
+tag="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" | jq -eMcr 'first | .["tag_name"]')" || exit 1
 target="/opt/tamarin"
 
 # script-pkgs install-script
-url="$(curl -sL "$ghreleases" | jq -eMcr --arg tag "$tag" \
+url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" | jq -eMcr --arg tag "$tag" \
     '.[] | select(.["tag_name"] == $tag) |
     .["assets"] | .[] | select(.["name"] |
     test("^tamarin-prover-[0-9\\.]+-linux64-ubuntu\\.tar\\.gz$")) |
@@ -22,7 +22,7 @@ status="installed"
 # script-pkgs update-script
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
-    url="$(curl -sL "$ghreleases" | jq -eMcr --arg tag "$tag" \
+    url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" | jq -eMcr --arg tag "$tag" \
         '.[] | select(.["tag_name"] == $tag) |
         .["assets"] | .[] | select(.["name"] |
         test("^tamarin-prover-[0-9\\.]+-linux64-ubuntu\\.tar\\.gz$")) |

@@ -9,7 +9,7 @@ slugs=("$slugkde" "$slugicon" "$sluggtk" "$slugcursor")
 tag=""
 for slug in "${slugs[@]}"; do
     ghcommits="https://api.github.com/repos/$slug/commits"
-    tag="$tag$(curl -sL "$ghcommits" | jq -eMcr 'first | .["sha"]')" || exit 1
+    tag="$tag$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghcommits" | jq -eMcr 'first | .["sha"]')" || exit 1
 done
 
 # script-pkgs install-script

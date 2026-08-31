@@ -4,11 +4,13 @@
 # script-pkgs init-script
 slug="ful1e5/Bibata_Cursor"
 ghreleases="https://api.github.com/repos/$slug/releases"
-tag="$(curl -sL "$ghreleases" | jq -eMcr 'first | .["tag_name"]')" || exit 1
+tag="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" \
+    | jq -eMcr 'first | .["tag_name"]')" || exit 1
 
 # script-pkgs install-script
-url="$(curl -sL "$ghreleases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
-    .["assets"] | .[] | select(.["name"] == "Bibata.tar.xz") | .["browser_download_url"]')" || exit 1
+url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" \
+    | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
+        .["assets"] | .[] | select(.["name"] == "Bibata.tar.xz") | .["browser_download_url"]')" || exit 1
 tar="$(mktemp)" || exit 1
 wget -O "$tar" "$url" || exit 1
 # shellcheck disable=SC2174
@@ -20,7 +22,8 @@ status="installed"
 # script-pkgs update-script
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
-    url="$(curl -sL "$ghreleases" | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
+    url="$(curl -sL --header "Authorization: Bearer $GITHUB_TOKEN" --url "$ghreleases" \
+        | jq -eMcr --arg tag "$tag" '.[] | select(.["tag_name"] == $tag) |
         .["assets"] | .[] | select(.["name"] == "Bibata.tar.xz") | .["browser_download_url"]')" || exit 1
     tar="$(mktemp)" || exit 1
     wget -O "$tar" "$url" || exit 1
