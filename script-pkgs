@@ -24,7 +24,6 @@ run_package() {
     local input="$2"
     local packages
     local package
-    get_github_token
     if test "$input" == "*"; then
         mapfile -t packages < \
             <(jq -Mcr 'keys | .[]' "$ScriptPkgsState" \
