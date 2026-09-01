@@ -146,8 +146,7 @@ extract_script() {
                 "set -o pipefail",
                 "status=\"noop\"",
                 "tag=\"\"",
-                "prev=\"$1\"",
-                "GITHUB_TOKEN=\"$(cat \"$HOME/.github-rate-limit\")\""
+                "prev=\"$1\""
             ] ] + . + [ [
                 "echo \"# script-pkgs $status $tag\" || exit 1",
                 "exit 0"
