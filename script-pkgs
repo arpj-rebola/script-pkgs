@@ -206,6 +206,8 @@ manage_install() {
         || die "Could not create script-pkgs state"
     sudo ln -fs "$ScriptPkgsDir/script-pkgs" "/usr/bin/script-pkgs" \
         || die "Could not create symbolic link to script-pkgs"
+    sudo chmod +x "/usr/bin/script-pkgs" \
+        || die "Could not set permissions for script-pkgs"
     echo "script-pkgs was installed"
 }
 
