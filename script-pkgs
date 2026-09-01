@@ -21,29 +21,23 @@ die() {
 
 run_package() {
     local action="$1"
-    local input="$2"
-    local packages
-    local package
-    if test "$input" == "*"; then
-        mapfile -t packages < \
-            <(jq -Mcr 'keys | .[]' "$ScriptPkgsState" \
-                || die "Could not retrieve installed packages")
-    else
-        packages=("$input")
-    fi
-    for package in "${packages[@]}"; do
-        case "$action" in
-            'install')
-                install_package "$package"
-            ;;
-            'update')
-                update_package "$package"
-            ;;
-            *)
-                die "Unknown action '$action'"
-            ;;
-        esac
-    done
+    local package="$2"
+    case "$action" in
+        'install')
+            install_package "$package"
+        ;;
+        'update')
+            update_package "$package"
+        ;;
+        'update-all')
+            test -z "$package" \
+                || die "Package specification is not allowed for 'update-all'"
+            update_all_packages
+        ;;
+        *)
+            die "Unknown action '$action'"
+        ;;
+    esac
 }
 
 install_package() {
@@ -102,6 +96,17 @@ update_package() {
     else
         die "Installation failed for package '$package'"
     fi
+}
+
+update_all_packages() {
+    local packages
+    local package
+    mapfile -t packages < \
+        <(jq -Mcr 'keys | .[]' "$ScriptPkgsState" \
+            || die "Could not retrieve installed packages")
+    for package in "${packages[@]}"; do
+        update_package "$package"
+    done
 }
 
 check_package() {
