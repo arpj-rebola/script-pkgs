@@ -161,7 +161,10 @@ execute_script() {
     local script="$1"
     local tag="$2"
     local output="$3"
-    bash -x "$script" "$tag" \
+    local token
+    token="$(cat "$HOME/.github-rate-limit")" \
+        || die "Could not retrieve GitHub rate limit token"
+    GITHUB_TOKEN="$token" bash -x "$script" "$tag" \
         | jq -McrRs 'split("\n") | .[] |
                 capture("^#\\s+script-pkgs\\s+(?<status>[^\\s]+)\\s+(?<tag>[^\\s]+)\\s*$")' \
         | sponge "$output" \
