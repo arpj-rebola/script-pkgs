@@ -165,7 +165,7 @@ execute_script() {
     local tag="$2"
     local output="$3"
     local token
-    token="$(cat "$HOME/.github-rate-limit")" \
+    token="$(cat "$ScriptPkgsDir/.github-rate-limit")" \
         || die "Could not retrieve GitHub rate limit token"
     GITHUB_TOKEN="$token" bash -x "$script" "$tag" \
         | jq -McrRs 'split("\n") | .[] |
