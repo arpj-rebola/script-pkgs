@@ -17,7 +17,7 @@ sudo wget -qO- "$keyurl" \
 echo "deb [signed-by=$keyring] $repourl syncthing stable" \
     | sudo install -o "root" -g "root" -m 644 "/dev/stdin" "$repolist" \
     || exit 1
-sudo pkcon -y refresh || exit 1
+sudo apt update -y || exit 1
 sudo apt-get install -y syncthing || exit 1
 # mkdir -p "$(dirname "$desktopsrc")" || exit 1
 # cp -f "$desktopsrc" "$desktopdest" || exit 1
@@ -32,7 +32,7 @@ tag="$(apt-cache policy syncthing | jq -McrRs 'split("\n") | .[] |
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
     # systemctl --user stop syncthing.service || exit 1
-    sudo pkcon update syncthing || exit 1
+    sudo apt upgrade -y syncthing || exit 1
     # systemctl --user start syncthing.service || exit 1
     # shellcheck disable=SC2034
     status="updated"

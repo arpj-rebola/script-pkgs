@@ -17,7 +17,7 @@ curl -sS "$keyurl" \
 echo "deb $repourl stable non-free" \
     | sudo tee "$repopath" \
     || exit 1
-sudo pkcon -y refresh || exit 1
+sudo apt update -y || exit 1
 sudo apt-get install --yes spotify-client || exit 1
 tag="$(apt-cache policy spotify-client | jq -McrRs 'split("\n") | .[] |
     capture("^\\s+Installed:\\s+(?<tag>.*)$") | .["tag"]')"
@@ -28,7 +28,7 @@ tag="$(apt-cache policy spotify-client | jq -McrRs 'split("\n") | .[] |
     capture("^\\s+Candidate:\\s+(?<tag>.*)$") | .["tag"]')"
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
-    sudo pkcon update spotify-client || exit 1
+    sudo apt upgrade -y spotify-client || exit 1
     # shellcheck disable=SC2034
     status="updated"
 fi

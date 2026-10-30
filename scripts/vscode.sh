@@ -16,7 +16,7 @@ wget -qO- "$keyurl" | gpg --dearmor \
 echo "deb [arch=$( dpkg --print-architecture ) signed-by=$keyring] $repourl stable main" \
     | sudo install -o "root" -g "root" -m 644 "/dev/stdin" "$repolist" \
     || exit 1
-sudo pkcon -y refresh || exit 1
+sudo apt update -y || exit 1
 sudo apt-get install -y code || exit 1
 tag="$(apt-cache policy code | jq -McrRs 'split("\n") | .[] |
     capture("^\\s+Installed:\\s+(?<tag>.*)$") | .["tag"]')"
@@ -27,7 +27,7 @@ tag="$(apt-cache policy code | jq -McrRs 'split("\n") | .[] |
     capture("^\\s+Candidate:\\s+(?<tag>.*)$") | .["tag"]')"
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
-    sudo pkcon update code || exit 1
+    sudo apt upgrade -y code || exit 1
     # shellcheck disable=SC2034
     status="updated"
 fi

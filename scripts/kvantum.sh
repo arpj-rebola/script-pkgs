@@ -21,7 +21,7 @@ curl -sL "$keyurl&search=0x$fingerprint" \
 echo "deb [signed-by=$keyring arch=$(dpkg --print-architecture)] $repourl $(lsb_release -cs) main" \
     | sudo install -o "root" -g "root" -m 644 "/dev/stdin" "$repolist" \
     || exit 1
-sudo pkcon refresh || exit 1
+sudo apt update -y || exit 1
 sudo apt-get install -y qt6-style-kvantum papirus-icon-theme || exit 1
 tag="$(apt-cache policy qt6-style-kvantum papirus-icon-theme \
     | jq -McrRs 'split("\n") | map(capture("^\\s+Installed:\\s+(?<tag>.*)$") | .["tag"]) | join(";")')"
@@ -32,7 +32,7 @@ tag="$(apt-cache policy qt6-style-kvantum papirus-icon-theme \
     | jq -McrRs 'split("\n") | map(capture("^\\s+Installed:\\s+(?<tag>.*)$") | .["tag"]) | join(";")')"
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
-    sudo pkcon update qt6-style-kvantum papirus-icon-theme || exit 1
+    sudo apt upgrade -y qt6-style-kvantum papirus-icon-theme || exit 1
     # shellcheck disable=SC2034
     status="updated"
 fi

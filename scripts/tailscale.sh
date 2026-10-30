@@ -17,7 +17,7 @@ wget -O- "$keyurl" \
 wget -O- "$repourl" \
     | sudo install -o "root" -g "root" -m 644 "/dev/stdin" "$repolist" \
     || exit 1
-sudo pkcon -y refresh || exit 1
+sudo apt update -y || exit 1
 sudo apt-get install -y tailscale  || exit 1
 tag="$(apt-cache policy tailscale | jq -McrRs 'split("\n") | .[] |
     capture("^\\s+Installed:\\s+(?<tag>.*)$") | .["tag"]')" || exit 1
@@ -28,7 +28,7 @@ tag="$(apt-cache policy tailscale | jq -McrRs 'split("\n") | .[] |
     capture("^\\s+Candidate:\\s+(?<tag>.*)$") | .["tag"]')"
 # shellcheck disable=SC2154
 if test "$tag" != "$prev"; then
-    sudo pkcon update tailscale || exit 1
+    sudo apt upgrade -y tailscale || exit 1
     # shellcheck disable=SC2034
     status="updated"
 fi
